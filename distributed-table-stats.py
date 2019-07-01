@@ -16,7 +16,7 @@ from requests.exceptions import HTTPError
 
 parser = argparse.ArgumentParser(description='Calculate size of data in directories of distributed tables')
 parser.add_argument('file_name', metavar='FILENAME', help='Output file')
-parser.add_argument('--format', default='json', choices=['json', 'table'],  help='Output file format')
+parser.add_argument('--format', default='json', choices=['json', 'table', 'prometheus'],  help='Output file format')
 parser.add_argument('--url', default='http://localhost:8123', help='ClickHouse HTTP endpoint address')
 parser.add_argument('--config', help='Path to config file in JSON format containing user and password')
 
@@ -52,9 +52,16 @@ def saveAsTable(file_path, data):
     for key, value in data.items():
       fp.write("%s %s\n" % (key, value))
 
+def saveAsPrometheus(file_path, data):
+  checkDirectory(file_path)
+  with open(file_path, 'w') as fp:
+    for key, value in data.items():
+      fp.write("clickhouse_distributed_table_size{table=\"%s\"} %s\n" % (key, value))
+
 function_save = {
-   'json': saveAsJSON,
-   'table': saveAsTable
+  'json': saveAsJSON,
+  'table': saveAsTable,
+  'prometheus': saveAsPrometheus
 }
 
 # Try to get username and password from config
